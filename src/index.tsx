@@ -4,14 +4,24 @@ import type {
 	RawDraftContentBlock,
 	RawDraftInlineStyleRange,
 } from "draft-js";
+import { extend } from "./utils";
 
 export function RichText({
-	config = defaultConfig,
+	config: propsConfig,
+	extendConfig,
 	json,
 }: {
 	config?: RTConfig;
+	extendConfig?: Partial<RTConfig>;
 	json: RawDraftContentState;
 }) {
+	let config: RTConfig;
+	if (propsConfig) {
+		config = propsConfig;
+	} else {
+		config = extend(defaultConfig, extendConfig ?? {});
+	}
+
 	return groupByType(json.blocks).flatMap((blocksOfType) => {
 		const blockConfig =
 			config.blockComponents[blocksOfType[0].type] ??
@@ -132,7 +142,7 @@ export type RTConfig = {
 	defaultInlineStyleComponent: InlineComponent;
 };
 
-export const defaultConfig = {
+export const defaultConfig: RTConfig = {
 	blockComponents: {
 		unstyled: "p",
 		header_one: "h1",
@@ -176,7 +186,7 @@ export const defaultConfig = {
 		KEYBOARD: "kbd",
 	},
 	defaultInlineStyleComponent: ({ children }) => <>{children}</>,
-} satisfies RTConfig;
+};
 
 function groupByType<T extends { type: string }>(
 	arr: Array<T>,

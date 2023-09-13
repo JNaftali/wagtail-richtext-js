@@ -14,12 +14,21 @@ Bun.serve({
 		const url = new URL(req.url);
 		const resultToShow = url.pathname.match(/^\/test-results\/(\d+)\/?$/i);
 		if (resultToShow) {
-			return new Response(
-				testCases[parseInt(resultToShow[1]) - 1].output.html5lib,
-				{
-					headers: [["Content-Type", "text/html"]],
-				},
+			const testCase = testCases[parseInt(resultToShow[1]) - 1];
+
+			const body = Server.renderToStaticMarkup(
+				<html lang="en">
+					<head>
+						<title>{testCase.label}</title>
+					</head>
+					<body
+						dangerouslySetInnerHTML={{ __html: testCase.output.html5lib }}
+					/>
+				</html>,
 			);
+			return new Response(body, {
+				headers: [["Content-Type", "text/html"]],
+			});
 		}
 
 		const body = Server.renderToStaticMarkup(
