@@ -35,6 +35,9 @@ export function RichText({
     }
     children.push(<React.Fragment key={text}>{text}</React.Fragment>);
 
+    if (typeof BlockComponent === "string")
+      return <BlockComponent key={block.key}>{children}</BlockComponent>;
+
     return (
       <BlockComponent key={block.key} block={block}>
         {children}
@@ -43,10 +46,14 @@ export function RichText({
   });
 }
 
-type BlockComponent = (
-  props: React.PropsWithChildren<{ block: RawDraftContentBlock }>
-) => React.ReactNode;
-type InlineComponent = (props: React.PropsWithChildren) => React.ReactNode;
+type BlockComponent =
+  | keyof JSX.IntrinsicElements
+  | ((
+      props: React.PropsWithChildren<{ block: RawDraftContentBlock }>
+    ) => React.ReactNode);
+type InlineComponent =
+  | keyof JSX.IntrinsicElements
+  | ((props: React.PropsWithChildren) => React.ReactNode);
 
 export type RTConfig = {
   blockComponents: { [type: string]: BlockComponent };
@@ -57,11 +64,11 @@ export type RTConfig = {
 
 export const defaultConfig = {
   blockComponents: {
-    unstyled: ({ children }) => <p>{children}</p>,
+    unstyled: "p",
   },
-  defaultBlockComponent: ({ children }) => <p>{children}</p>,
+  defaultBlockComponent: "p",
   inlineStyleComponents: {
-    BOLD: ({ children }) => <strong>{children}</strong>,
+    BOLD: "strong",
   },
   defaultInlineStyleComponent: ({ children }) => <>{children}</>,
 } satisfies RTConfig;
