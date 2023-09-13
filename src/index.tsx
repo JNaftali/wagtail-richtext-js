@@ -4,7 +4,6 @@ import type {
 	RawDraftContentBlock,
 	RawDraftInlineStyleRange,
 } from "draft-js";
-console.log("start");
 
 export function RichText({
 	config = defaultConfig,
@@ -77,7 +76,6 @@ export function RichText({
 		while (text.length && activeRange) {
 			// If there is unstyled text before the range starts, chop it off
 			if (offset < activeRange.offset) {
-				console.log(text, offset, activeRange.offset);
 				const takeUntil = activeRange.offset - offset;
 				const t = text.slice(0, takeUntil);
 				result.push(<React.Fragment key={t + text.length}>{t}</React.Fragment>);
@@ -183,6 +181,7 @@ export const defaultConfig = {
 function groupByType<T extends { type: string }>(
 	arr: Array<T>,
 ): Array<Array<T>> {
+	arr = [...arr]; // Should I write my code without mutation? I dunno
 	const result: Array<Array<T>> = [];
 	while (arr.length) {
 		// Type is always a string because the array isn't empty

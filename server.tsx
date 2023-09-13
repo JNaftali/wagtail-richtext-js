@@ -10,7 +10,18 @@ let testsToRun = testCases;
 // testsToRun = testsToRun.slice(6, 7);
 
 Bun.serve({
-	fetch() {
+	fetch(req) {
+		const url = new URL(req.url);
+		const resultToShow = url.pathname.match(/^\/test-results\/(\d+)\/?$/i);
+		if (resultToShow) {
+			return new Response(
+				testCases[parseInt(resultToShow[1]) - 1].output.html5lib,
+				{
+					headers: [["Content-Type", "text/html"]],
+				},
+			);
+		}
+
 		const body = Server.renderToStaticMarkup(
 			<html>
 				<head>
