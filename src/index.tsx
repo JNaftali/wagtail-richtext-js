@@ -1,9 +1,17 @@
+import * as React from "react";
+
+type InlineStyleRange = {
+  offset: number;
+  length: number;
+  style: string;
+};
+
 type ContentStateBlock = {
   key: string;
   text: string;
   type: string;
   depth: number;
-  inlineStyleRanges: [];
+  inlineStyleRanges: Array<InlineStyleRange>;
   entityRanges: [];
 };
 
@@ -22,7 +30,31 @@ export function RichText({
   return json.blocks.map((block) => {
     const BlockComponent =
       config.blockComponents[block.type] ?? config.defaultBlockComponent;
-    return <BlockComponent {...block}>{block.text}</BlockComponent>;
+    let text = block.text;
+    const children: Array<React.ReactNode> = [];
+    let [activeRange, ...ranges] = block.inlineStyleRanges;
+    while (activeRange) {
+      // push unstyled text preceding current offset
+      children.push(
+        <React.Fragment key={text}>
+          {text.slice(0, activeRange.offset)}
+        </React.Fragment>
+      );
+      text = text.slice(activeRange.offset);
+      const InlineStyleComponent =
+        config.inlineStyleComponents[activeRange.style] ??
+        config.defaultInlineStyleComponent;
+      children.push(
+        <InlineStyleComponent key={text}>
+          {text.slice(0, activeRange.length)}
+        </InlineStyleComponent>
+      );
+      text = text.slice(activeRange.length);
+      [activeRange, ...ranges] = ranges;
+    }
+    children.push(<React.Fragment key={text}>{text}</React.Fragment>);
+
+    return <BlockComponent {...block}>{children}</BlockComponent>;
   });
 }
 

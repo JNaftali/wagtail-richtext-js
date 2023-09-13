@@ -14,7 +14,8 @@ Bun.serve({
             <section key={i}>
               <hr />
               <h5>Test case {i + 1}</h5>
-              <RichText json={content_state} />
+              {/* TODO: remove as any when types are complete */}
+              <RichText json={content_state as any} />
             </section>
           ))}
         </body>
