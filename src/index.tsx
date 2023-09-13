@@ -1,5 +1,9 @@
 import * as React from "react";
-import type { RawDraftContentState, RawDraftContentBlock } from "draft-js";
+import type {
+  RawDraftContentState,
+  RawDraftContentBlock,
+  RawDraftInlineStyleRange,
+} from "draft-js";
 
 export function RichText({
   config = defaultConfig,
@@ -9,32 +13,9 @@ export function RichText({
   json: RawDraftContentState;
 }) {
   return json.blocks.map((block) => {
+    const children = renderStyledText(block.text, 0, block.inlineStyleRanges);
     const BlockComponent =
       config.blockComponents[block.type] ?? config.defaultBlockComponent;
-    let text = block.text;
-    const children: Array<React.ReactNode> = [];
-    let [activeRange, ...ranges] = block.inlineStyleRanges;
-    while (activeRange) {
-      // push unstyled text preceding current offset
-      children.push(
-        <React.Fragment key={text}>
-          {text.slice(0, activeRange.offset)}
-        </React.Fragment>
-      );
-      text = text.slice(activeRange.offset);
-      const InlineStyleComponent =
-        config.inlineStyleComponents[activeRange.style] ??
-        config.defaultInlineStyleComponent;
-      children.push(
-        <InlineStyleComponent key={text}>
-          {text.slice(0, activeRange.length)}
-        </InlineStyleComponent>
-      );
-      text = text.slice(activeRange.length);
-      [activeRange, ...ranges] = ranges;
-    }
-    children.push(<React.Fragment key={text}>{text}</React.Fragment>);
-
     if (typeof BlockComponent === "string")
       return <BlockComponent key={block.key}>{children}</BlockComponent>;
 
@@ -44,6 +25,42 @@ export function RichText({
       </BlockComponent>
     );
   });
+
+  function renderStyledText(
+    text: string,
+    offset: number,
+    [activeRange, ...ranges]: RawDraftInlineStyleRange[]
+  ) {
+    const result: Array<React.ReactNode> = [];
+    while (text.length && activeRange) {
+      // If there is unstyled text before the range starts, chop it off
+      if (offset < activeRange.offset) {
+        const takeUntil = activeRange.offset - offset;
+        const t = text.slice(0, takeUntil);
+        result.push(<React.Fragment key={t + text.length}>{t}</React.Fragment>);
+        text = text.slice(takeUntil);
+        offset = activeRange.offset;
+      }
+
+      // render the text in the range and any additional styles that should be wrapped around it
+      const styledText = renderStyledText(
+        text.slice(0, activeRange.length),
+        offset,
+        ranges
+      );
+      const InlineComponent =
+        config.inlineStyleComponents[activeRange.style] ??
+        config.defaultInlineStyleComponent;
+      result.push(
+        <InlineComponent key={text.length}>{styledText}</InlineComponent>
+      );
+      offset += activeRange.length;
+      text = text.slice(activeRange.length);
+      [activeRange, ...ranges] = ranges;
+    }
+    if (text) result.push(<React.Fragment key={text}>{text}</React.Fragment>);
+    return result;
+  }
 }
 
 type BlockComponent =
