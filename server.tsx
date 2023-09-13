@@ -6,6 +6,8 @@ import testCases from "./test-cases.json";
  * Known issues I might decide not to address:
  * 1. test case 3 + 4 (Nested inline styles and Nested inline styles (inverted)) are supposed to render the same thing. Instead, one has a `strong` wrapped by `em` and the other has `em` wrapped by `strong`
  */
+let testsToRun = testCases;
+// testsToRun = testsToRun.slice(6, 7);
 
 Bun.serve({
 	fetch() {
@@ -15,7 +17,7 @@ Bun.serve({
 					<title>sup</title>
 				</head>
 				<body>
-					{testCases.map(({ content_state, label }, i) => (
+					{testsToRun.map(({ content_state, label }, i) => (
 						<section key={i}>
 							<hr />
 							<h5>

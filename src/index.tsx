@@ -4,6 +4,7 @@ import type {
 	RawDraftContentBlock,
 	RawDraftInlineStyleRange,
 } from "draft-js";
+console.log("start");
 
 export function RichText({
 	config = defaultConfig,
@@ -76,16 +77,19 @@ export function RichText({
 		while (text.length && activeRange) {
 			// If there is unstyled text before the range starts, chop it off
 			if (offset < activeRange.offset) {
+				console.log(text, offset, activeRange.offset);
 				const takeUntil = activeRange.offset - offset;
 				const t = text.slice(0, takeUntil);
 				result.push(<React.Fragment key={t + text.length}>{t}</React.Fragment>);
 				text = text.slice(takeUntil);
 				offset = activeRange.offset;
 			}
+			if (!text) return result;
 
 			// render the text in the range and any additional styles that should be wrapped around it
+			const length = activeRange.length ?? 1; // y no length if length is 1, that's not what types say :(
 			const styledText = renderStyledText(
-				text.slice(0, activeRange.length),
+				text.slice(0, length),
 				offset,
 				ranges,
 			);
@@ -95,8 +99,8 @@ export function RichText({
 			result.push(
 				<InlineComponent key={text.length}>{styledText}</InlineComponent>,
 			);
-			offset += activeRange.length;
-			text = text.slice(activeRange.length);
+			offset += length;
+			text = text.slice(length);
 			[activeRange, ...ranges] = ranges;
 		}
 		if (text) result.push(<React.Fragment key={text}>{text}</React.Fragment>);
