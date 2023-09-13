@@ -1,21 +1,22 @@
 {
-  "name": "wagtail-richtext-js",
-  "module": "server.tsx",
-  "type": "module",
-  "scripts": {
-    "start": "bun --watch --hot ."
-  },
-  "devDependencies": {
-    "@types/draft-js": "^0.11.12",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
-    "bun-types": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  }
+	"name": "wagtail-richtext-js",
+	"module": "server.tsx",
+	"type": "module",
+	"scripts": {
+		"start": "bun --watch ."
+	},
+	"devDependencies": {
+		"@types/draft-js": "^0.11.12",
+		"@types/react": "^18.2.21",
+		"@types/react-dom": "^18.2.7",
+		"bun-types": "latest",
+		"prettier": "^3.0.3"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	}
 }
