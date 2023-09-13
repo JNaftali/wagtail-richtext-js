@@ -12,18 +12,59 @@ export function RichText({
   config?: RTConfig;
   json: RawDraftContentState;
 }) {
-  return json.blocks.map((block) => {
-    const children = renderStyledText(block.text, 0, block.inlineStyleRanges);
-    const BlockComponent =
-      config.blockComponents[block.type] ?? config.defaultBlockComponent;
-    if (typeof BlockComponent === "string")
-      return <BlockComponent key={block.key}>{children}</BlockComponent>;
-
-    return (
-      <BlockComponent key={block.key} block={block}>
-        {children}
-      </BlockComponent>
-    );
+  return groupByType(json.blocks).flatMap((blocksOfType) => {
+    const blockConfig =
+      config.blockComponents[blocksOfType[0].type] ??
+      config.defaultBlockComponent;
+    if (typeof blockConfig === "string") {
+      const BlockComponent = blockConfig;
+      return blocksOfType.map((block) => {
+        const children = renderStyledText(
+          block.text,
+          0,
+          block.inlineStyleRanges
+        );
+        return <BlockComponent key={block.key}>{children}</BlockComponent>;
+      });
+    } else if ("wrapper" in blockConfig) {
+      const WrapperComponent = blockConfig.wrapper;
+      const BlockComponent = blockConfig.element;
+      return (
+        <WrapperComponent key={blocksOfType[0].key}>
+          {blocksOfType.map((block) => {
+            const children = renderStyledText(
+              block.text,
+              0,
+              block.inlineStyleRanges
+            );
+            if (typeof BlockComponent === "string")
+              return (
+                <BlockComponent key={block.key}>{children}</BlockComponent>
+              );
+            else
+              return (
+                <BlockComponent key={block.key} block={block}>
+                  {children}
+                </BlockComponent>
+              );
+          })}
+        </WrapperComponent>
+      );
+    } else {
+      const BlockComponent = blockConfig;
+      return blocksOfType.map((block) => {
+        const children = renderStyledText(
+          block.text,
+          0,
+          block.inlineStyleRanges
+        );
+        return (
+          <BlockComponent key={block.key} block={block}>
+            {children}
+          </BlockComponent>
+        );
+      });
+    }
   });
 
   function renderStyledText(
@@ -63,11 +104,21 @@ export function RichText({
   }
 }
 
-type BlockComponent =
+type RenderedBlockComponent =
   | keyof JSX.IntrinsicElements
   | ((
       props: React.PropsWithChildren<{ block: RawDraftContentBlock }>
     ) => React.ReactNode);
+
+type BlockComponent =
+  | {
+      element: RenderedBlockComponent;
+      wrapper:
+        | keyof JSX.IntrinsicElements
+        | ((props: React.PropsWithChildren) => React.ReactNode);
+    }
+  | RenderedBlockComponent;
+
 type InlineComponent =
   | keyof JSX.IntrinsicElements
   | ((props: React.PropsWithChildren) => React.ReactNode);
@@ -82,10 +133,63 @@ export type RTConfig = {
 export const defaultConfig = {
   blockComponents: {
     unstyled: "p",
+    header_one: "h1",
+    header_two: "h2",
+    header_three: "h3",
+    header_four: "h4",
+    header_five: "h5",
+    header_six: "h6",
+    "unordered-list-item": {
+      element: "li",
+      wrapper: "ul",
+    },
+    "ordered-list-item": {
+      element: "li",
+      wrapper: ({ children }) => <ol>{children}</ol>, // could just be 'ol', here for
+    },
+    blockquote: "blockquote",
+    pre: "pre",
+    code: ({ children }) => (
+      <pre>
+        <code>{children}</code>
+      </pre>
+    ),
+    atomic: ({ children }) => children,
   },
   defaultBlockComponent: "p",
   inlineStyleComponents: {
     BOLD: "strong",
+    CODE: "code",
+    ITALIC: "em",
+    UNDERLINE: "u",
+    STRIKETHROUGH: "s",
+    SUPERSCRIPT: "sup",
+    SUBSCRIPT: "sub",
+    MARK: "mark",
+    QUOTATION: "q",
+    SMALL: "small",
+    SAMPLE: "samp",
+    INSERT: "ins",
+    DELETE: "del",
+    KEYBOARD: "kbd",
   },
   defaultInlineStyleComponent: ({ children }) => <>{children}</>,
 } satisfies RTConfig;
+
+function groupByType<T extends { type: string }>(
+  arr: Array<T>
+): Array<Array<T>> {
+  const result: Array<Array<T>> = [];
+  while (arr.length) {
+    // Type is always a string because the array isn't empty
+    const type = arr[0].type;
+    const group: Array<T> = [];
+    while (type === arr[0]?.type) {
+      // because type is always a string, if we're here the first element in the array
+      // can't be undefined so the ! is ok
+      group.push(arr.shift()!);
+    }
+    result.push(group);
+  }
+  return result;
+}
