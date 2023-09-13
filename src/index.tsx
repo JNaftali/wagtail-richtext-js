@@ -1,31 +1,12 @@
 import * as React from "react";
-
-type InlineStyleRange = {
-  offset: number;
-  length: number;
-  style: string;
-};
-
-type ContentStateBlock = {
-  key: string;
-  text: string;
-  type: string;
-  depth: number;
-  inlineStyleRanges: Array<InlineStyleRange>;
-  entityRanges: [];
-};
-
-type ContentState = {
-  entityMap: {};
-  blocks: Array<ContentStateBlock>;
-};
+import type { RawDraftContentState, RawDraftContentBlock } from "draft-js";
 
 export function RichText({
   config = defaultConfig,
   json,
 }: {
   config?: RTConfig;
-  json: ContentState;
+  json: RawDraftContentState;
 }) {
   return json.blocks.map((block) => {
     const BlockComponent =
@@ -54,12 +35,16 @@ export function RichText({
     }
     children.push(<React.Fragment key={text}>{text}</React.Fragment>);
 
-    return <BlockComponent {...block}>{children}</BlockComponent>;
+    return (
+      <BlockComponent key={block.key} block={block}>
+        {children}
+      </BlockComponent>
+    );
   });
 }
 
 type BlockComponent = (
-  props: React.PropsWithChildren<ContentStateBlock>
+  props: React.PropsWithChildren<{ block: RawDraftContentBlock }>
 ) => React.ReactNode;
 type InlineComponent = (props: React.PropsWithChildren) => React.ReactNode;
 

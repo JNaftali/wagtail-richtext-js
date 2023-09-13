@@ -6,6 +6,7 @@
     "start": "bun --watch --hot ."
   },
   "devDependencies": {
+    "@types/draft-js": "^0.11.12",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "bun-types": "latest"
