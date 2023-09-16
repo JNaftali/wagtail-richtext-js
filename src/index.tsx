@@ -22,7 +22,7 @@ export function RichText({
 		config = extend(defaultConfig, extendConfig ?? {});
 	}
 
-	return groupByType(json.blocks).flatMap((blocksOfType) => {
+	return groupBlocks(json.blocks).flatMap((blocksOfType) => {
 		const blockConfig =
 			config.blockComponents[blocksOfType[0].type] ??
 			config.defaultBlockComponent;
@@ -145,12 +145,12 @@ export type RTConfig = {
 export const defaultConfig: RTConfig = {
 	blockComponents: {
 		unstyled: "p",
-		header_one: "h1",
-		header_two: "h2",
-		header_three: "h3",
-		header_four: "h4",
-		header_five: "h5",
-		header_six: "h6",
+		"header-one": "h1",
+		"header-two": "h2",
+		"header-three": "h3",
+		"header-four": "h4",
+		"header-five": "h5",
+		"header-six": "h6",
 		"unordered-list-item": {
 			element: "li",
 			wrapper: "ul",
@@ -188,7 +188,7 @@ export const defaultConfig: RTConfig = {
 	defaultInlineStyleComponent: ({ children }) => <>{children}</>,
 };
 
-function groupByType<T extends { type: string }>(
+function groupBlocks<T extends { type: string; depth: number }>(
 	arr: Array<T>,
 ): Array<Array<T>> {
 	arr = [...arr]; // Should I write my code without mutation? I dunno
@@ -197,7 +197,7 @@ function groupByType<T extends { type: string }>(
 		// Type is always a string because the array isn't empty
 		const type = arr[0].type;
 		const group: Array<T> = [];
-		while (type === arr[0]?.type) {
+		while (type === arr[0]?.type || arr[0]?.depth > 0) {
 			// because type is always a string, if we're here the first element in the array
 			// can't be undefined so the ! is ok
 			group.push(arr.shift()!);
