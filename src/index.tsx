@@ -47,8 +47,15 @@ function renderStyledText(
 	config = defaultConfig,
 	text: string,
 	offset: number,
-	[activeRange, ...ranges]: RawDraftInlineStyleRange[],
+	ranges: RawDraftInlineStyleRange[],
 ) {
+	ranges = ranges.toSorted((a, b) => {
+		if (a.offset !== b.offset) return a.offset - b.offset;
+		if (a.length !== b.length) return b.length - a.length;
+		return 0;
+	});
+	let activeRange;
+	[activeRange, ...ranges] = ranges;
 	const result: Array<React.ReactNode> = [];
 	while (text.length && activeRange) {
 		// If there is unstyled text before the range starts, chop it off
