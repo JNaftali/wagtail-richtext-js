@@ -292,17 +292,14 @@ export const defaultConfig: RTConfig = {
 	},
 	defaultInlineStyleComponent: ({ children }) => <>{children}</>,
 	entityComponents: {
+		IMAGE: ({ data }: { data: { src: string } }) => <img src={data.src} />,
 		LINK: ({
 			children,
-			data,
+			data: { url, ...rest },
 		}: React.PropsWithChildren<{
-			data: { url: string; rel?: string | null; title?: string | null };
+			data: { url: string };
 		}>) => (
-			<a
-				href={data.url}
-				rel={data.rel ?? undefined}
-				title={data.title ?? undefined}
-			>
+			<a href={url} {...rest}>
 				{children}
 			</a>
 		),
