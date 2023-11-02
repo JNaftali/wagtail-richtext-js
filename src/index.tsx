@@ -6,7 +6,8 @@ import type {
 	RawDraftEntity,
 	RawDraftEntityRange,
 } from "draft-js";
-import { isObject, mergeDeep, takeUntil } from "./utils";
+import { isObject, takeUntil } from "./utils";
+import mergeDeep from "lodash/fp/merge";
 
 interface ConfiguredEntityRange extends RawDraftEntityRange {
 	data: any;
@@ -22,10 +23,12 @@ function RenderBlockComponent({
 	config,
 	children,
 	entityMap,
+	decorators,
 }: React.PropsWithChildren<{
 	block: RawDraftContentBlock;
 	config: RTConfig;
 	entityMap: { [key: string]: RawDraftEntity };
+	decorators: Array<Decorator>;
 }>) {
 	const blockConfig =
 		config.blockComponents[block.type] ?? config.defaultBlockComponent;
@@ -51,10 +54,13 @@ function RenderBlockComponent({
 			config.defaultInlineStyleComponent,
 	}));
 
-	const contents = renderStyledText(block.text, 0, [
-		...configuredInlineStyleRanges,
-		...configuredEntityRanges,
-	]);
+	const contents = renderStyledText(
+		block.text,
+		0,
+		[...configuredInlineStyleRanges, ...configuredEntityRanges],
+		block,
+		decorators,
+	);
 	if (typeof Component === "string") {
 		return (
 			<Component>
@@ -72,10 +78,59 @@ function RenderBlockComponent({
 	}
 }
 
+function DecoratedText({
+	text,
+	block,
+	decorators,
+}: {
+	text: string;
+	block: RawDraftContentBlock;
+	decorators: Array<Decorator>;
+}) {
+	const occupied: number[] = [];
+	const decorations: Array<Decoration> = [];
+	for (let decorator of decorators) {
+		const regexp = RegExp(decorator.strategy, "g");
+		for (let match of text.matchAll(regexp)) {
+			const begin = match.index ?? 0;
+			const end = regexp.lastIndex;
+			if (
+				!occupied.some((i) => (match?.index ?? 0) <= i && i < regexp.lastIndex)
+			) {
+				for (let i = match.index ?? 0; i < regexp.lastIndex; i++) {
+					occupied.push(i);
+				}
+				decorations.push({ begin, end, match, decorator });
+			}
+		}
+	}
+
+	const result = [];
+	let pointer = 0;
+	for (let { begin, end, match, decorator } of decorations) {
+		if (pointer < begin) {
+			result.push(text.slice(pointer, begin));
+		}
+
+		result.push(
+			<decorator.Component match={match} block={block}>
+				{match[0]}
+			</decorator.Component>,
+		);
+		pointer = end;
+	}
+	if (pointer < text.length) {
+		result.push(text.slice(pointer));
+	}
+	return result;
+}
+
 function renderStyledText(
 	text: string,
 	offset: number,
 	ranges: Array<ConfiguredInlineStyleRange | ConfiguredEntityRange>,
+	block: RawDraftContentBlock,
+	decorators: Array<Decorator>,
 ) {
 	ranges = ranges.toSorted((a, b) => {
 		if (a.offset !== b.offset) return a.offset - b.offset;
@@ -92,7 +147,14 @@ function renderStyledText(
 		if (offset < activeRange.offset) {
 			const takeUntil = activeRange.offset - offset;
 			const t = text.slice(0, takeUntil);
-			result.push(<React.Fragment key={t + text.length}>{t}</React.Fragment>);
+			result.push(
+				<DecoratedText
+					key={t + text.length}
+					text={t}
+					block={block}
+					decorators={decorators}
+				/>,
+			);
 			text = text.slice(takeUntil);
 			offset = activeRange.offset;
 		}
@@ -100,7 +162,13 @@ function renderStyledText(
 
 		// render the text in the range and any additional styles that should be wrapped around it
 		const length = activeRange.length ?? 1; // y no length if length is 1, that's not what types say :(
-		const styledText = renderStyledText(text.slice(0, length), offset, ranges);
+		const styledText = renderStyledText(
+			text.slice(0, length),
+			offset,
+			ranges,
+			block,
+			decorators,
+		);
 		if ("style" in activeRange) {
 			const InlineComponent = activeRange.component;
 			result.push(
@@ -118,7 +186,15 @@ function renderStyledText(
 		text = text.slice(length);
 		[activeRange, ...ranges] = ranges;
 	}
-	if (text) result.push(<React.Fragment key={text}>{text}</React.Fragment>);
+	if (text)
+		result.push(
+			<DecoratedText
+				key={text}
+				text={text}
+				block={block}
+				decorators={decorators}
+			/>,
+		);
 	return result;
 }
 
@@ -154,6 +230,7 @@ export function RichText({
 				blocks={blocksOfType}
 				config={config}
 				entityMap={json.entityMap}
+				decorators={config.decorators}
 			/>,
 		);
 	}
@@ -164,10 +241,12 @@ function BlockGroup({
 	blocks,
 	config,
 	entityMap,
+	decorators,
 }: {
 	blocks: RawDraftContentBlock[];
 	config: RTConfig;
 	entityMap: { [key: string]: RawDraftEntity };
+	decorators: Array<Decorator>;
 }) {
 	blocks = [...blocks];
 	const groupDepth = blocks[0].depth;
@@ -192,6 +271,7 @@ function BlockGroup({
 					blocks={nestedBlocks}
 					config={config}
 					entityMap={entityMap}
+					decorators={decorators}
 				/>
 			);
 		}
@@ -201,6 +281,7 @@ function BlockGroup({
 				block={currentBlock}
 				config={config}
 				entityMap={entityMap}
+				decorators={decorators}
 			>
 				{children}
 			</RenderBlockComponent>,
@@ -237,6 +318,22 @@ type EntityComponent = (
 	props: React.PropsWithChildren<{ data: any }>,
 ) => React.ReactNode;
 
+interface Decorator {
+	strategy: string | RegExp;
+	Component: (
+		props: React.PropsWithChildren<{
+			match: RegExpMatchArray;
+			block: RawDraftContentBlock;
+		}>,
+	) => React.ReactNode;
+}
+interface Decoration {
+	begin: number;
+	end: number;
+	match: RegExpMatchArray;
+	decorator: Decorator;
+}
+
 export type RTConfig = {
 	blockComponents: { [type: string]: BlockComponent };
 	defaultBlockComponent: BlockComponent;
@@ -245,6 +342,7 @@ export type RTConfig = {
 	entityComponents: {
 		[type: string]: EntityComponent;
 	};
+	decorators: Array<Decorator>;
 };
 
 export const defaultConfig: RTConfig = {
@@ -292,7 +390,9 @@ export const defaultConfig: RTConfig = {
 	},
 	defaultInlineStyleComponent: ({ children }) => <>{children}</>,
 	entityComponents: {
-		IMAGE: ({ data }: { data: { src: string } }) => <img src={data.src} />,
+		IMAGE: ({ data }: { data: React.HTMLProps<HTMLImageElement> }) => (
+			<img {...data} />
+		),
 		LINK: ({
 			children,
 			data: { url, ...rest },
@@ -303,5 +403,12 @@ export const defaultConfig: RTConfig = {
 				{children}
 			</a>
 		),
+		HORIZONTAL_RULE: () => <hr />,
 	},
+	decorators: [
+		{
+			strategy: "\n",
+			Component: () => <br />,
+		},
+	],
 };

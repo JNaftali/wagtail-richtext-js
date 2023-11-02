@@ -16,40 +16,55 @@ Bun.serve({
 		if (resultToShow) {
 			const testCase = testCases[parseInt(resultToShow[1]) - 1];
 
-			const body = Server.renderToStaticMarkup(
-				<html lang="en">
-					<head>
-						<title>{testCase.label}</title>
-					</head>
-					<body
-						dangerouslySetInnerHTML={{ __html: testCase.output.html5lib }}
-					/>
-				</html>,
-			);
+			const body =
+				"<!DOCTYPE html>" +
+				Server.renderToStaticMarkup(
+					<html lang="en">
+						<head>
+							<title>{testCase.label}</title>
+						</head>
+						<body
+							dangerouslySetInnerHTML={{ __html: testCase.output.html5lib }}
+						/>
+					</html>,
+				);
 			return new Response(body, {
 				headers: [["Content-Type", "text/html"]],
 			});
 		}
 
-		const body = Server.renderToStaticMarkup(
-			<html>
-				<head>
-					<title>sup</title>
-				</head>
-				<body>
-					{testsToRun.map(({ content_state, label }, i) => (
-						<section key={i}>
-							<hr />
-							<h5>
-								Test case {i + 1}: {label}
-							</h5>
-							{/* TODO: remove as any when types are complete */}
-							<RichText json={content_state as any} />
-						</section>
-					))}
-				</body>
-			</html>,
-		);
+		const body =
+			"<!DOCTYPE html>" +
+			Server.renderToStaticMarkup(
+				<html>
+					<head>
+						<title>sup</title>
+					</head>
+					<body>
+						{testsToRun.map(({ content_state, label }, i) => (
+							<section key={i}>
+								<hr />
+								<h5>
+									Test case {i + 1}: {label}
+								</h5>
+								{/* TODO: remove as any when types are complete */}
+								<RichText
+									json={content_state as any}
+									extendConfig={{
+										blockComponents: {
+											"code-block": ({ children }) => (
+												<pre>
+													<code>{children}</code>
+												</pre>
+											),
+										},
+									}}
+								/>
+							</section>
+						))}
+					</body>
+				</html>,
+			);
 		return new Response(body, {
 			headers: [
 				["Content-Type", "text/html"],

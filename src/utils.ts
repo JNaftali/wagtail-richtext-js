@@ -6,28 +6,6 @@ export function isObject(item: any): item is object {
 }
 
 /**
- * Deep merge two objects.
- * copied from https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
- */
-export function mergeDeep<T>(target: T, ...sources: Array<Partial<T>>): T {
-	if (!sources.length) return target;
-	const source = sources.shift();
-
-	if (isObject(target) && isObject(source)) {
-		for (const key in source) {
-			if (isObject(source[key])) {
-				if (!target[key]) Object.assign(target, { [key]: {} });
-				mergeDeep(target[key], source[key] ?? {});
-			} else {
-				Object.assign(target, { [key]: source[key] });
-			}
-		}
-	}
-
-	return mergeDeep(target, ...sources);
-}
-
-/**
  * Take from an array until condition returns true. Modifies the array, returns elements removed from the array
  */
 export function takeUntil<T>(
