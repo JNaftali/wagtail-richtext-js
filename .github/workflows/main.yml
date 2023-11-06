@@ -2,7 +2,10 @@ on:
   pull_request:
     branches:
     - main
-	name: my-workflow
+  push:
+    branches:
+    - main
+name: my-workflow
 jobs:
   run-tests:
     name: my-job
