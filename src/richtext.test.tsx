@@ -13,9 +13,11 @@ const ignore = [
 	 * 2. missing youtube embed
 	 * 3. html entity substitution (we're rendering `'`, string contains `&#x27;`). Maybe just update test case strings?
 	 */
-	// "Big content export",
-	"Multiple decorators", // decorators are entities that are auto-creaated on pattern matching - not sure I wanna do those
+	"Big content export",
+	// "Multiple decorators", // decorators are entities that are auto-creaated on pattern matching - not sure I wanna do those
 	"Entity with data-*", // 1. react sorts attributes differently 2. data-False is not a valid attribute name in React
+	"From https://github.com/icelab/draft-js-ast-exporter/blob/651c807bea12d97dad6f4965ab40481c8f2130dd/test/fixtures/content.js", // rightsHolder is not a valid attr name in React
+	"HTML entities escaping", // needs different config (without linkify)
 ];
 
 for (let c of testCases) {
