@@ -1,6 +1,7 @@
 import * as Server from "react-dom/server";
-import { RichText } from "./src";
+import { RTConfig, RichText } from "./src";
 import testCases from "./test-cases.json";
+import { testConfig } from "./src/testconfig";
 
 /**
  * Known issues I might decide not to address:
@@ -50,15 +51,7 @@ Bun.serve({
 								{/* TODO: remove as any when types are complete */}
 								<RichText
 									json={content_state as any}
-									extendConfig={{
-										blockComponents: {
-											"code-block": ({ children }) => (
-												<pre>
-													<code>{children}</code>
-												</pre>
-											),
-										},
-									}}
+									extendConfig={testConfig}
 								/>
 							</section>
 						))}

@@ -93,7 +93,7 @@ function DecoratedText({
 		const regexp = RegExp(decorator.strategy, "g");
 		for (let match of text.matchAll(regexp)) {
 			const begin = match.index ?? 0;
-			const end = regexp.lastIndex;
+			const end = begin + match[0].length;
 			if (
 				!occupied.some((i) => (match?.index ?? 0) <= i && i < regexp.lastIndex)
 			) {
