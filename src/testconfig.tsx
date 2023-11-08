@@ -27,16 +27,6 @@ export const testConfig: Partial<RTConfig> = {
 			},
 		},
 		{
-			strategy: /#\w+/,
-			Component: (props) => {
-				if (props.block.type === "code-block") {
-					return props.children;
-				} else {
-					return <span className="hashtag">{props.children}</span>;
-				}
-			},
-		},
-		{
 			strategy:
 				/(http:\/\/|https:\/\/|www\.)([a-zA-Z0-9\.\-%/\?&_=\+#:~!,\'\*\^$]+)/,
 			Component: (props) => {
@@ -52,6 +42,16 @@ export const testConfig: Partial<RTConfig> = {
 							{href}
 						</a>
 					);
+				}
+			},
+		},
+		{
+			strategy: /#\w+/,
+			Component: (props) => {
+				if (props.block.type === "code-block") {
+					return props.children;
+				} else {
+					return <span className="hashtag">{props.children}</span>;
 				}
 			},
 		},

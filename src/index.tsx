@@ -89,15 +89,14 @@ function DecoratedText({
 }) {
 	const occupied: number[] = [];
 	const decorations: Array<Decoration> = [];
+
 	for (let decorator of decorators) {
 		const regexp = RegExp(decorator.strategy, "g");
 		for (let match of text.matchAll(regexp)) {
 			const begin = match.index ?? 0;
 			const end = begin + match[0].length;
-			if (
-				!occupied.some((i) => (match?.index ?? 0) <= i && i < regexp.lastIndex)
-			) {
-				for (let i = match.index ?? 0; i < regexp.lastIndex; i++) {
+			if (!occupied.some((i) => (match?.index ?? 0) <= i && i < end)) {
+				for (let i = match.index ?? 0; i < end; i++) {
 					occupied.push(i);
 				}
 				decorations.push({ begin, end, match, decorator });
