@@ -2,6 +2,7 @@ import * as Server from "react-dom/server";
 import { RTConfig, RichText } from "./src";
 import testCases from "./test-cases.json";
 import { testConfig } from "./src/testconfig";
+import { RawDraftContentState } from "draft-js";
 
 /**
  * Known issues I might decide not to address:
@@ -48,7 +49,6 @@ Bun.serve({
 								<h5>
 									Test case {i + 1}: {label}
 								</h5>
-								{/* TODO: remove as any when types are complete */}
 								<RichText
 									json={content_state as any}
 									extendConfig={testConfig}
@@ -60,7 +60,7 @@ Bun.serve({
 			);
 		return new Response(body, {
 			headers: [
-				["Content-Type", "text/html"],
+				["Content-Type", "text/html; charset=utf-8"],
 				["Content-Length", body.length.toString()],
 			],
 		});
