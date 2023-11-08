@@ -14,6 +14,9 @@ export const testConfig: Partial<RTConfig> = {
 	},
 	inlineStyleComponents: {
 		KBD: "kbd",
+		HIGHLIGHT: ({ children }) => (
+			<strong style={{ textDecoration: "underline" }}>{children}</strong>
+		),
 	},
 	decorators: [
 		{

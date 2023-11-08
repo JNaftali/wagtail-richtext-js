@@ -142,6 +142,12 @@ function renderStyledText(
 	[activeRange, ...ranges] = ranges;
 	const result: Array<React.ReactNode> = [];
 	while (text.length && activeRange) {
+		// skip ranges we've already covered (during recursion)
+		if (offset >= activeRange.offset + activeRange.length) {
+			[activeRange, ...ranges] = ranges;
+			continue;
+		}
+
 		// If there is unstyled text before the range starts, chop it off
 		if (offset < activeRange.offset) {
 			const takeUntil = activeRange.offset - offset;
@@ -158,6 +164,9 @@ function renderStyledText(
 			offset = activeRange.offset;
 		}
 		if (!text) return result;
+		// if (block.key === "32lnv" && activeRange.style === "CODE") {
+		// 	console.log(text, offset, activeRange.offset, activeRange.length);
+		// }
 
 		// render the text in the range and any additional styles that should be wrapped around it
 		const length = activeRange.length ?? 1; // y no length if length is 1, that's not what types say :(
